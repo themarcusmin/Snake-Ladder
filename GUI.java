@@ -16,7 +16,7 @@ public class GUI {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
 
-        JFrame frame = new JFrame("Snake & Ladder");
+        JFrame frame = new JFrame("Snake & Ladder 2");
         frame.setPreferredSize(new Dimension(800, 640));
         
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
