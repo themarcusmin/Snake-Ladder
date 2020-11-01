@@ -16,19 +16,13 @@ public class Square extends JPanel {
             sqNumber.setForeground(Color.WHITE);
         }
         
-        // Add label tothe square
+        // Add label to the square
         add(sqNumber);
     }
 
     public void updateColor(Color c) {
         setBackground(c);
     }
-
-    // @Override
-    // public void paintComponent(Graphics g) {
-    //     super.paintComponent(g);
-    //     g.setColor(Color.BLACK);
-    // }
 
     @Override
     public Dimension getPreferredSize() {

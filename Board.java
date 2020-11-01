@@ -1,11 +1,13 @@
 import javax.swing.*;
 import javax.swing.border.*;
-
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
-public class Board1 extends JPanel {
+import java.util.Map;
+import java.util.HashMap;
+
+public class Board extends JPanel {
 
     private JPanel[][] squares = new JPanel[10][10];
     private int N = 100;
@@ -14,13 +16,24 @@ public class Board1 extends JPanel {
     private int loc_X = 0;
     private JLabel PIECE = new JLabel(new ImageIcon("img/chess-piece.png"));
     private JLabel PIECE_2 = new JLabel(new ImageIcon("img/horse.png"));
-    // Hold current dice number
+    // Store current dice number
     private int diceNumber;
-
-    //test13
+    // test13 | document this
     private Mover mover = new Mover();
+    // Map to store coordinates of each snake / ladder
+    private Map<Coordinate, Coordinate> path = new HashMap<Coordinate, Coordinate>();
+    // Snakes
+    private Snake1 s1;
+    private Snake2 s2;
+    private Snake3 s3;
+    private Snake4 s4;
+    // Ladders
+    private Ladder1 l1;
+    private Ladder2 l2;
+    private Ladder3 l3;
+    private Ladder4 l4;
 
-    public Board1() {
+    public Board() {
         // Layout for squares
         setLayout(new GridLayout(0, 10));
 
@@ -72,20 +85,136 @@ public class Board1 extends JPanel {
 
         // Starter location for the piece at [9][0]
         squares[loc_Y][loc_X].add(PIECE);
+
         // TEST: add second player
         squares[loc_Y][loc_X].add(PIECE_2, BorderLayout.LINE_START);
         // squares[loc_Y][loc_X].remove(2);
         System.out.println(squares[loc_Y][loc_X].getComponentCount());
+
+        // Add Snake 1
+        s1 = new Snake1();
+        addToPath(s1);
+        // Add Snake 2
+        s2 = new Snake2();
+        addToPath(s2);
+        // Add Snake 3
+        s3 = new Snake3();
+        addToPath(s3);
+        // Add Snake 4
+        s4 = new Snake4();
+        addToPath(s4);
+
+        // Add Ladder 1
+        l1 = new Ladder1();
+        addToPath(l1);
+        // Add Ladder 2
+        l2 = new Ladder2();
+        addToPath(l2);
+        // Add Ladder 3
+        l3 = new Ladder3();
+        addToPath(l3);
+        // Add Ladder 4
+        l4 = new Ladder4();
+        addToPath(l4);
+
     }
+
     /*
-     *  Clear image at former Location
+     * Store all starting and ending positions in hashmap to avoid overlapping coordinates
+     * @param unit
+     */
+    private void addToPath(Unit unit) {
+        // Instantiate starter positions
+        Coordinate start = new Coordinate(unit.Y(), unit.X());
+        Coordinate end = new Coordinate(unit.end_Y(), unit.end_X());
+
+        // If starting and ending coordinates already existed, get new postions
+        while (true) {
+            if (!(path.containsKey(start)) && !(path.containsValue(end)) && !(path.containsKey(end)) && !(path.containsValue(start))) break;
+            unit.rollRandom();
+            start = new Coordinate(unit.Y(), unit.X());
+            end = new Coordinate(unit.end_Y(), unit.end_X());
+        }
+        // Add to the path
+        path.put(start, end);
+        System.out.println(unit);
+        System.out.println("start " + start);
+        System.out.println("end " + end);
+    }
+
+    // Paint snakes and ladders on the board
+    @Override
+    protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+
+        /*
+         * Snake 1 | Green snake
+         *  - Adjust X and Y relative to image positioning
+         *  - Draw image on board based on adjusted X and Y
+         */
+        int s1_x = s1.adjustedX(squares[s1.Y()][s1.X()].getX());
+        int s1_y = s1.adjustedY(squares[s1.Y()][s1.X()].getY());
+        g.drawImage(s1.getImage(), s1_x, s1_y, this);
+
+        /*
+         * Snake 2 | Pink snake
+         */
+        int s2_x = s2.adjustedX(squares[s2.Y()][s2.X()].getX());
+        int s2_y = s2.adjustedY(squares[s2.Y()][s2.X()].getY());
+        g.drawImage(s2.getImage(), s2_x, s2_y, this);
+        
+        /*
+         * Snake 3 | Purple snake
+         */
+        int s3_x = s3.adjustedX(squares[s3.Y()][s3.X()].getX());
+        int s3_y = s3.adjustedY(squares[s3.Y()][s3.X()].getY());
+        g.drawImage(s3.getImage(), s3_x, s3_y, this);
+
+        /*
+         * Snake 4 | Yellow snake
+         */
+        int s4_x = s4.adjustedX(squares[s4.Y()][s4.X()].getX());
+        int s4_y = s4.adjustedY(squares[s4.Y()][s4.X()].getY());
+        g.drawImage(s4.getImage(), s4_x, s4_y, this);
+
+        /*
+         * White ladder
+         */
+        int l1_x = l1.adjustedX(squares[l1.Y()][l1.X()].getX());
+        int l1_y = l1.adjustedY(squares[l1.Y()][l1.X()].getY());
+        g.drawImage(l1.getImage(), l1_x, l1_y, this);
+
+        /*
+         * Yellow ladder
+         */
+        int l2_x = l2.adjustedX(squares[l2.Y()][l2.X()].getX());
+        int l2_y = l2.adjustedY(squares[l2.Y()][l2.X()].getY());
+        g.drawImage(l2.getImage(), l2_x, l2_y, this);
+        
+        /*
+         * Black ladder
+         */
+        int l3_x = l3.adjustedX(squares[l3.Y()][l3.X()].getX());
+        int l3_y = l3.adjustedY(squares[l3.Y()][l3.X()].getY());
+        g.drawImage(l3.getImage(), l3_x, l3_y, this);
+
+        /*
+         * Tall ladder
+         */
+        int l4_x = l4.adjustedX(squares[l4.Y()][l4.X()].getX());
+        int l4_y = l4.adjustedY(squares[l4.Y()][l4.X()].getY());
+        g.drawImage(l4.getImage(), l4_x, l4_y, this);
+    
+    }
+
+    /*
+     *  Clear image at former square
      *  - Store the number labelling
      *  - Remove the chess_piece_image of current location (Also remove the number)
      *  - Add the number labelling and set it visible
      *  - Refresh the component
      */
     private void clearImage() {
-        //Former Location
         // Store number labelling in temp
         Component temp = squares[loc_Y][loc_X].getComponents()[0];
         // Remove the image of the piece at index 1 (side effect: hide the number too)
@@ -97,12 +226,11 @@ public class Board1 extends JPanel {
     }
 
     /*
-     *  Add image at new Location
+     *  Add image at new square
      *  - Hide the number labelling
      *  - Add the chess_piece_image
      */
     private void addImage() {
-        // New Location
         // Hide the number labelling
         squares[loc_Y][loc_X].getComponents()[0].setVisible(false);
         // Add the image of the piece and refresh
@@ -125,7 +253,7 @@ public class Board1 extends JPanel {
      *  New Location
      *  - Add Image
      */
-    public void moveOneSquare() {
+    private void moveOneSquare() {
         System.out.println("Moving one square");
         clearImage();
         // Update Location
@@ -167,6 +295,8 @@ public class Board1 extends JPanel {
                 timer.stop();
                 // LOGIC for snake and ladder PATH
                 // TEST: stop (if get loc_Y and loc_X >> move up or down)
+                // if Y and X in DS, clearimage().. reset Y and X
+                // if pathing(x, y) then clearImage(), loc_Y = and loc_X = , addImage()
                 clearImage();
                 // TEST coordinate
                 loc_Y = 9;

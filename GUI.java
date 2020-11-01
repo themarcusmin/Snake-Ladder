@@ -9,7 +9,7 @@ public class GUI {
     private Random rand = new Random();
 
     // Board
-    private Board1 board;
+    private Board board;
 
     // Menu
     private Menu menu;
@@ -59,6 +59,8 @@ public class GUI {
         frame.setPreferredSize(new Dimension(800, 640));
         
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
 
         // Load images
         loadDiceImages();
@@ -70,7 +72,7 @@ public class GUI {
         rollImage.addMouseListener(new rollListener());
 
         // Get Board
-        board = new Board1();
+        board = new Board();
 
         // Get Side Menu, adding the component to hold the image
         menu = new Menu(rollImage);
