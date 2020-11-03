@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.*;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -9,16 +10,28 @@ import java.util.HashMap;
 
 public class Board extends JPanel {
 
+    private static final long serialVersionUID = 10l;
+
     private JPanel[][] squares = new JPanel[10][10];
     private int N = 100;
     private Square sq;
-    private int loc_Y = 9;
-    private int loc_X = 0;
-    private JLabel PIECE = new JLabel(new ImageIcon("img/chess-piece.png"));
-    private JLabel PIECE_2 = new JLabel(new ImageIcon("img/horse.png"));
+    private int loc_Y;
+    private int loc_X;
+
+    // Players
+    private JLabel PAWN = new JLabel(new ImageIcon("img/chess-piece.png"));
+    private JLabel KNIGHT = new JLabel(new ImageIcon("img/horse.png"));
+    private Player player1 = new Player(PAWN);
+    private Player player2 = new Player(KNIGHT);
+    // Track each player's turn
+    private Player currentPlayer;
+    private JLabel currentIcon;
+
+    // Bounce backward at 100
+    private boolean backward = false;
     // Store current dice number
     private int diceNumber;
-    // test13 | document this
+    // Mover moves players' icons
     private Mover mover = new Mover();
     // Map to store coordinates of each snake / ladder
     private Map<Coordinate, Coordinate> path = new HashMap<Coordinate, Coordinate>();
@@ -76,20 +89,18 @@ public class Board extends JPanel {
             }
         }
 
+        // Paint square 100 to indicate winning
+        squares[0][0].setBackground(new Color(128, 202, 113));
+        squares[0][0].setBorder(new LineBorder(Color.WHITE, 2, true));
+
         // Add all squares to the board
         for (int row = 0; row < 10; row++) {
             for (int col = 0; col < 10; col++) {
                 add(squares[row][col]);
             }
         }
-
-        // Starter location for the piece at [9][0]
-        squares[loc_Y][loc_X].add(PIECE);
-
-        // TEST: add second player
-        squares[loc_Y][loc_X].add(PIECE_2, BorderLayout.LINE_START);
-        // squares[loc_Y][loc_X].remove(2);
-        System.out.println(squares[loc_Y][loc_X].getComponentCount());
+        // New Game
+        setupPlayer();
 
         // Add Snake 1
         s1 = new Snake1();
@@ -119,6 +130,25 @@ public class Board extends JPanel {
 
     }
 
+    /**
+     * Set players for a new game / Restart game @ game over
+     *  - Declare first player
+     *  - Add icons at [9][0]
+     */
+    private void setupPlayer() {
+        loc_Y = 9;
+        loc_X = 0;
+        player1.reset();
+        player2.reset();
+        // Declare current player
+        currentPlayer = player1;
+        currentIcon = currentPlayer.getIcon();
+        // Set players' icons at [9][0]
+        squares[loc_Y][loc_X].add(currentIcon);
+        squares[loc_Y][loc_X].add(player2.getIcon(), BorderLayout.LINE_START);
+        squares[loc_Y][loc_X].revalidate();
+    }
+
     /*
      * Store all starting and ending positions in hashmap to avoid overlapping coordinates
      * @param unit
@@ -137,9 +167,6 @@ public class Board extends JPanel {
         }
         // Add to the path
         path.put(start, end);
-        System.out.println(unit);
-        System.out.println("start " + start);
-        System.out.println("end " + end);
     }
 
     // Paint snakes and ladders on the board
@@ -209,32 +236,23 @@ public class Board extends JPanel {
 
     /*
      *  Clear image at former square
-     *  - Store the number labelling
-     *  - Remove the chess_piece_image of current location (Also remove the number)
-     *  - Add the number labelling and set it visible
-     *  - Refresh the component
+     *  - Remove current icon component
      */
     private void clearImage() {
-        // Store number labelling in temp
-        Component temp = squares[loc_Y][loc_X].getComponents()[0];
-        // Remove the image of the piece at index 1 (side effect: hide the number too)
-        squares[loc_Y][loc_X].remove(1);
-        // Add the stored number labelling, set it visible and refresh
-        squares[loc_Y][loc_X].add(temp);
-        squares[loc_Y][loc_X].getComponents()[0].setVisible(true);
+        squares[loc_Y][loc_X].remove(currentIcon);
         squares[loc_Y][loc_X].revalidate();
+        // Repaint snakes and ladders
+        repaint();
     }
 
     /*
      *  Add image at new square
-     *  - Hide the number labelling
-     *  - Add the chess_piece_image
+     *  - Get number of icons at new square
+     *  - Add current icon based on the iconsCount
      */
     private void addImage() {
-        // Hide the number labelling
-        squares[loc_Y][loc_X].getComponents()[0].setVisible(false);
-        // Add the image of the piece and refresh
-        squares[loc_Y][loc_X].add(PIECE);
+        int iconsCount = squares[loc_Y][loc_X].getComponentCount();
+        squares[loc_Y][loc_X].add(currentIcon, (iconsCount == 1) ? BorderLayout.LINE_START : null);
         squares[loc_Y][loc_X].revalidate();
     }
 
@@ -254,7 +272,6 @@ public class Board extends JPanel {
      *  - Add Image
      */
     private void moveOneSquare() {
-        System.out.println("Moving one square");
         clearImage();
         // Update Location
         // Y is even
@@ -277,7 +294,24 @@ public class Board extends JPanel {
     }
 
     /*
-     * ActionListener executes moving 1 square, stops when counter reaches diceNumber
+     * Bounce back icons at [0][0]
+     * Occurs at Y = 0 and increments X
+     */
+    private void moveOneSquareBackward() {
+        clearImage();
+        loc_X++;
+        addImage();
+    }
+
+    /*
+     * ActionListener Mover
+     *  - Moves 1 square per action and halts when incremening counter reaches diceNumber
+     *  - If square is 100 / [0][0], bounce pieces backward 
+     *  - Else, move pieces forward
+     *  - After timer stops or action halted, check coordinates
+     *  - If coordinates is at snake's head ot ladder's tail, move along the path
+     *  - Store x and y of player
+     *  - Switch player and icon
      */
     private class Mover implements ActionListener {
         // Count the number of squres to move
@@ -285,23 +319,45 @@ public class Board extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            // Increment count per square-move
-            moveOneSquare();
+            // Toggle backward on
+            if (loc_Y == 0 && loc_X == 0) backward = true;
+            // Forward or backward
+            if (backward) {
+                moveOneSquareBackward();
+            } else {
+                moveOneSquare();
+            }
             count++;
+            // All squares have been accounted
             if (count == diceNumber) {
+                // Reset backward
+                backward = false;
                 // Reset count and stop timer
                 count = 0;
                 Timer timer = (Timer) e.getSource();
                 timer.stop();
-                // LOGIC for snake and ladder PATH
-                // TEST: stop (if get loc_Y and loc_X >> move up or down)
-                // if Y and X in DS, clearimage().. reset Y and X
-                // if pathing(x, y) then clearImage(), loc_Y = and loc_X = , addImage()
-                clearImage();
-                // TEST coordinate
-                loc_Y = 9;
-                loc_X = 1;
-                addImage();
+
+                Coordinate currentCoord = new Coordinate(loc_Y, loc_X);
+                // Game Over At [0][0]
+                if (currentCoord.getY() == 0 && currentCoord.getX() == 0) {
+                    gameOver(currentPlayer);
+                    return;
+                }
+                // Find out if current coord is the starting path: move piece to new coord
+                if (path.containsKey(currentCoord)) {
+                    clearImage();
+                    Coordinate newCoord = path.get(currentCoord);
+                    loc_Y = newCoord.getY();
+                    loc_X = newCoord.getX();
+                    addImage();
+                }
+                // Store Y & X in currentPlayer
+                currentPlayer.set_coordinates(loc_Y, loc_X);
+                // Switch player & icon
+                currentPlayer = currentPlayer.equals(player1) ? player2 : player1;
+                currentIcon = currentPlayer.getIcon();
+                loc_Y = currentPlayer.get_Y();
+                loc_X = currentPlayer.get_X();
             }
         }
     }
@@ -313,8 +369,29 @@ public class Board extends JPanel {
      */
     public ActionListener move(int diceNumber)
     {
-        System.out.println("TEST: dicenumber " + diceNumber);
         this.diceNumber = diceNumber;
         return mover;
+    }
+
+    /**
+     * Game Over Prompt: new game or quit game
+     */
+    private void gameOver(Player winner) {
+        Object gameOptions[] = { "New Game", "Quit" };
+        int response = JOptionPane.showOptionDialog(this, winner + " has made it out alive!", "GAME OVER",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, gameOptions,
+                        null);
+        if (response == JOptionPane.YES_OPTION) {
+            newGame();
+        } else {
+            System.exit(0);
+        }
+    }
+
+    /**
+     * Start a new game
+     */
+    private void newGame() {
+        setupPlayer();
     }
 }

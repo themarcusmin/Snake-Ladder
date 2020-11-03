@@ -20,6 +20,9 @@ public class GUI {
     private boolean not_rolling = true;
     private int diceNumber;
     private PieceMover pieceMover;
+    // Announce player turns
+    private JLabel announcer;
+    private boolean player1 = true;
 
     // Load dice images into the array DICES
     public void loadDiceImages()
@@ -65,17 +68,18 @@ public class GUI {
         // Load images
         loadDiceImages();
 
-        // Starter component
+        // Starter image for dice roller
         rollImage = new JLabel(DICES[0]);
-
         // Listen to mouse click on rollImage
         rollImage.addMouseListener(new rollListener());
+        // Announce current player's turn
+        announcer = new JLabel("Start Playing");
+        announcer.setForeground(Color.RED);
+        // Get Side Menu, adding the component to hold the image
+        menu = new Menu(rollImage, announcer);
 
         // Get Board
         board = new Board();
-
-        // Get Side Menu, adding the component to hold the image
-        menu = new Menu(rollImage);
 
         // Add Board and Side Menu to the frame
         frame.getContentPane().add(board, BorderLayout.CENTER);
@@ -100,6 +104,15 @@ public class GUI {
             // Rolling Dice
             if (not_rolling)
             {
+                // Alternate two players' turn
+                if (player1) {
+                    announcer.setText("Player 1's Turn");
+                    player1 = false;
+                } else {
+                    announcer.setText("Player 2's Turn");
+                    player1 = true; 
+                }
+                // Load dice rolling gif
                 Icon dice_gif = new ImageIcon("img/dice.gif");
                 rollImage.setIcon(dice_gif);
                 not_rolling = false;
